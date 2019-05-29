@@ -1,6 +1,7 @@
 const express = require("express");
 
 const Users = require("./userDb.js");
+const Posts = require("../posts/postDb.js");
 
 const router = express.Router();
 
@@ -16,7 +17,16 @@ router.post("/", validateUser, async (req, res) => {
   }
 });
 
-router.post("/:id/posts", (req, res) => {});
+router.post("/:id/posts", validatePost, async (req, res) => {
+  const postInfo = { ...req.body, user_id: req.params.id };
+  try {
+    const newPost = await Posts.insert(postInfo);
+    res.status(200).json(newPost);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "error posting" });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
@@ -38,11 +48,33 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.get("/:id/posts", (req, res) => {});
+router.get("/:id/posts", async (req, res) => {
+  try {
+    const posts = await Posts.getById(req.params.id);
+    res.status(200).json(posts);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "user not found" });
+  }
+});
 
-router.delete("/:id", (req, res) => {});
+router.delete("/:id", validateUserId, async (req, res) => {
+  try {
+    res.status(200).json(await Users.remove(req.params.id));
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error removing" });
+  }
+});
 
-router.put("/:id", (req, res) => {});
+router.put("/:id", validateUserId, async (req, res) => {
+  try {
+    res.status(200).json(await Users.update(req.params.id, req.body));
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error updating" });
+  }
+});
 
 //custom middleware
 
